@@ -66,7 +66,7 @@ func (a *Auth) GetUserByLogin(login, password string) (model.User, error) {
 }
 
 func (a *Auth) GetUserByEmail(email, password string) (model.User, error) {
-	return a.userRepo.GetUserByEmail(email, password)
+	return a.userRepo.GetUserByEmail(email, a.generatePasswordHash(password))
 }
 
 func (a *Auth) GenerateAuthTokensByEmail(email, password string) (model.AuthTokens, error) {
@@ -96,7 +96,7 @@ func (a *Auth) generateAuthTokensByUser(user model.User) (model.AuthTokens, erro
 }
 
 func (a *Auth) GenerateAuthTokensByLogin(login, password string) (model.AuthTokens, error) {
-	user, err := a.GetUserByLogin(login, password)
+	user, err := a.GetUserByLogin(login, a.generatePasswordHash(password))
 	if err != nil {
 		return model.AuthTokens{}, err
 	}
@@ -129,7 +129,7 @@ func (a *Auth) generatePasswordHash(password string) string {
 	return fmt.Sprintf("%x", hash.Sum(a.passwordSecret))
 }
 
-func (a *Auth) signOut(refreshToken string) error {
+func (a *Auth) SignOut(refreshToken string) error {
 	return a.blockedRefreshTokenRepo.Create(refreshToken)
 }
 

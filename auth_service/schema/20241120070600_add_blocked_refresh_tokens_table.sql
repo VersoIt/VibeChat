@@ -1,9 +1,11 @@
 -- +goose Up
 -- +goose StatementBegin
-SELECT 'up SQL query';
+CREATE TABLE IF NOT EXISTS blocked_refresh_tokens(
+    token VARCHAR(512) UNIQUE NOT NULL
+);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+DROP TABLE IF EXISTS blocked_refresh_tokens;
 -- +goose StatementEnd

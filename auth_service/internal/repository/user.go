@@ -20,7 +20,7 @@ const (
 )
 
 func (r *UserRepository) CreateUser(user model.User) (int, error) {
-	query := fmt.Sprintf("INSERT INTO %s(login, email, password) VALUES($1, $2, $3)", usersTableName)
+	query := fmt.Sprintf("INSERT INTO %s(login, email, password) VALUES($1, $2, $3) RETURNING id", usersTableName)
 	if err := r.db.QueryRow(query, user.Login, user.Email, user.Password).Scan(&user.Id); err != nil {
 		return 0, err
 	}

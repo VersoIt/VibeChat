@@ -12,19 +12,24 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user model.User
+	type userRequest struct {
+		Email    string `json:"email"`
+		Login    string `json:"login"`
+		Password string `json:"password"`
+	}
+	var user userRequest
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	id, err := h.authService.CreateUser(user)
+	id, err := h.authService.CreateUser(model.User{Email: user.Email, Login: user.Login, Password: user.Password})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(id); err != nil {
+	if err = json.NewEncoder(w).Encode(id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -52,10 +57,10 @@ func (h *Handler) signInViaEmail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(tokens); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) signInViaLogin(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +73,6 @@ func (h *Handler) signInViaLogin(w http.ResponseWriter, r *http.Request) {
 		Login    string `json:"login"`
 		Password string `json:"password"`
 	}
-
 	var request authRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -80,10 +84,10 @@ func (h *Handler) signInViaLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	if err := json.NewEncoder(w).Encode(tokens); err != nil {
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(tokens); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) refreshAccessToken(w http.ResponseWriter, r *http.Request) {
@@ -120,12 +124,12 @@ func (h *Handler) refreshAccessToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := json.NewEncoder(w).Encode(&response{accessToken}); err != nil {
+
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(&response{accessToken}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) signOut(w http.ResponseWriter, r *http.Request) {
@@ -153,6 +157,10 @@ func (h *Handler) signOut(w http.ResponseWriter, r *http.Request) {
 	if !isValid {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
+	}
+
+	if err = h.authService.SignOut(req.RefreshToken); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -184,9 +192,9 @@ func (h *Handler) validateAccessToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := response{IsValid: isValid}
+	w.WriteHeader(http.StatusOK)
 	if err = json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
